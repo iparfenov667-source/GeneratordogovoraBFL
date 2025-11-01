@@ -1,2 +1,0 @@
-# GeneratordogovoraBFL
-Ген. договора

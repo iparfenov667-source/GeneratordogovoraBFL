@@ -1,144 +1,147 @@
-from flask import Flask, render_template_string, request, send_file
+import streamlit as st
 from docxtpl import DocxTemplate
 from datetime import datetime
 import io
-import re
 
-app = Flask(__name__)
+st.set_page_config(page_title="Генератор договора", layout="wide")
 
-# HTML-шаблон с формой
-HTML_TEMPLATE = '''
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <title>Генератор договоров «Рапид Право»</title>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }
-    h1 { text-align: center; color: #2c3e50; }
-    label { display: block; margin-top: 15px; font-weight: bold; }
-    input, textarea { width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-    button { display: block; width: 100%; padding: 12px; margin-top: 20px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; }
-    button:hover { background: #219653; }
-  </style>
-</head>
-<body>
-  <h1>📄 Генератор договора поручения</h1>
-  <form method="POST">
-    <label>1) Номер договора (например, №1765)</label>
-    <input name="contract_num" placeholder="№1765" required>
+# Заголовок приложения
+st.title("📄 Генератор договора поручения")
+st.markdown("Генератор договоров для Рапид Право")
+st.divider()
 
-    <label>2) Дата договора (например, 22.10.2025)</label>
-    <input name="date_zakl" placeholder="22.10.2025" required>
+# Два столбца для формы
+col1, col2 = st.columns(2)
 
-    <label>3) ФИО клиента</label>
-    <input name="fio" placeholder="Парфенов Илья Алексеевич" required>
+with col1:
+    # Номер договора
+    contract_num = st.text_input(
+        "1️⃣ Номер договора",
+        placeholder="№1765",
+        help="Введите номер договора (без символа №)"
+    ).replace('№', '').strip()
 
-    <label>4) Дата рождения</label>
-    <input name="data_rod" placeholder="25.05.2000" required>
+    # Дата договора
+    date_zakl = st.text_input(
+        "2️⃣ Дата договора",
+        placeholder="22.10.2025",
+        help="Формат: ДД.МММ.ГГГГ"
+    )
 
-    <label>5) Серия и номер паспорта</label>
-    <input name="passport" placeholder="45 04 123456" required>
+    # ФИО клиента
+    fio = st.text_input(
+        "3️⃣ ФИО клиента",
+        placeholder="Парфенов Илья Алексеевич"
+    )
 
-    <label>6) Стоимость (выберите тариф)</label>
-    <select name="summa" required>
-      <option value="">— Выберите —</option>
-      <option value="180000">180 000 ₽ (9 мес по 20 000 ₽)</option>
-      <option value="210000">210 000 ₽ (12 мес по 17 500 ₽)</option>
-      <option value="240000">240 000 ₽ (16 мес по 15 000 ₽)</option>
-      <option value="260000">260 000 ₽ (20 мес по 13 000 ₽)</option>
-    </select>
+    # Дата рождения
+    data_rod = st.text_input(
+        "4️⃣ Дата рождения",
+        placeholder="25.05.2000"
+    )
 
-    <label>7) Адрес регистрации</label>
-    <input name="adres" placeholder="г. Санкт-Петербург, ул. Затшига, д. 50, кв. 50" required>
+with col2:
+    # Паспорт
+    passport = st.text_input(
+        "5️⃣ Серия и номер паспорта",
+        placeholder="45 04 123456"
+    )
 
-    <label>8) Номер телефона</label>
-    <input name="phone" placeholder="+79019435321" required>
+    # Стоимость (тариф)
+    summa = st.selectbox(
+        "6️⃣ Стоимость (выберите тариф)",
+        options=[
+            (180000, "180 000 ₽ (9 мес по 20 000 ₽)"),
+            (210000, "210 000 ₽ (12 мес по 17 500 ₽)"),
+            (240000, "240 000 ₽ (16 мес по 15 000 ₽)"),
+            (260000, "260 000 ₽ (20 мес по 13 000 ₽)")
+        ],
+        format_func=lambda x: x[1]
+    )
+    summa_val = summa[0] if summa else None
 
-    <button type="submit">Сгенерировать договор (.docx)</button>
-  </form>
-</body>
-</html>
-'''
+    # Адрес регистрации
+    adres = st.text_input(
+        "7️⃣ Адрес регистрации",
+        placeholder="г. Санкт-Петербург, ул. Затшига, д. 50, кв. 50"
+    )
 
-@app.route('/', methods=['GET'])
-def index():
-    return render_template_string(HTML_TEMPLATE)
+    # Номер телефона
+    phone = st.text_input(
+        "8️⃣ Номер телефона",
+        placeholder="+79019435321"
+    )
 
-@app.route('/', methods=['POST'])
-def generate():
-    try:
-        # Получаем данные из формы
-        contract_num = request.form['contract_num'].replace('№', '').strip()
-        date_zakl = request.form['date_zakl']
-        fio = request.form['fio']
-        data_rod = request.form['data_rod']
-        passport = request.form['passport']
-        summa = int(request.form['summa'])
-        adres = request.form['adres']
-        phone = request.form['phone']
+st.divider()
 
-        # Тарифы
-        tariffs = {
-            180000: {"payment": 20000, "months": 9},
-            210000: {"payment": 17500, "months": 12},
-            240000: {"payment": 15000, "months": 16},
-            260000: {"payment": 13000, "months": 20},
-        }
+# Кнопка генерации
+if st.button("🚀 Сгенерировать договор", use_container_width=True):
+    # Валидация
+    if not all([contract_num, date_zakl, fio, data_rod, passport, summa_val, adres, phone]):
+        st.error("❌ Заполните все поля")
+    else:
+        try:
+            # Тарифы
+            tariffs = {
+                180000: {"payment": 20000, "months": 9},
+                210000: {"payment": 17500, "months": 12},
+                240000: {"payment": 15000, "months": 16},
+                260000: {"payment": 13000, "months": 20},
+            }
 
-        if summa not in tariffs:
-            return "❌ Недопустимая стоимость", 400
-
-        tariff = tariffs[summa]
-        payment = tariff["payment"]
-        months = tariff["months"]
-
-        # Генерация дат платежей
-        start_date = datetime.strptime(date_zakl, "%d.%m.%Y")
-        payment_dates = []
-        for i in range(months):
-            if i == 0:
-                pay_date = date_zakl
+            if summa_val not in tariffs:
+                st.error("❌ Недопустимая стоимость")
             else:
-                year = start_date.year + (start_date.month + i - 1) // 12
-                month = (start_date.month + i - 1) % 12 + 1
-                pay_date = f"10.{month:02d}.{year}"
-            payment_dates.append(pay_date)
+                tariff = tariffs[summa_val]
+                payment = tariff["payment"]
+                months = tariff["months"]
 
-        # Контекст для шаблона
-        context = {
-            "contract_num": contract_num,
-            "date_zakl": date_zakl,
-            "fio": fio,
-            "data_rod": data_rod,
-            "passport": passport,
-            "summa": f"{summa:,}".replace(",", " "),
-            "adres": adres,
-            "phone": phone,
-        }
+                # Генерация дат платежей
+                start_date = datetime.strptime(date_zakl, "%d.%m.%Y")
+                payment_dates = []
+                for i in range(months):
+                    if i == 0:
+                        pay_date = date_zakl
+                    else:
+                        year = start_date.year + (start_date.month + i - 1) // 12
+                        month = (start_date.month + i - 1) % 12 + 1
+                        pay_date = f"10.{month:02d}.{year}"
+                    payment_dates.append(pay_date)
 
-        for i in range(1, 21):
-            context[f"payment_date_{i}"] = payment_dates[i - 1] if i <= months else ""
-            context[f"payment_summa_{i}"] = payment if i <= months else ""
+                # Контекст для шаблона
+                context = {
+                    "contract_num": contract_num,
+                    "date_zakl": date_zakl,
+                    "fio": fio,
+                    "data_rod": data_rod,
+                    "passport": passport,
+                    "summa": f"{summa_val:,}".replace(",", " "),
+                    "adres": adres,
+                    "phone": phone,
+                }
+                for i in range(1, 21):
+                    context[f"payment_date_{i}"] = payment_dates[i - 1] if i <= months else ""
+                    context[f"payment_summa_{i}"] = payment if i <= months else ""
 
-        # Генерация документа
-        doc = DocxTemplate("Dogovor_BFL_RASSROChKA_ShABLON.docx")
-        doc.render(context)
+                # Генерация документа
+                doc = DocxTemplate("Dogovor_BFL_RASSROChKA_ShABLON.docx")
+                doc.render(context)
+                output = io.BytesIO()
+                doc.save(output)
+                output.seek(0)
 
-        output = io.BytesIO()
-        doc.save(output)
-        output.seek(0)
+                filename = f"Договор_№{contract_num}.docx"
 
-        filename = f"Договор_№{contract_num}.docx"
-        return send_file(
-            output,
-            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            as_attachment=True,
-            download_name=filename
-        )
+                st.success("✅ Договор готов!")
+                st.download_button(
+                    label="📥 Скачать договор",
+                    data=output.getvalue(),
+                    file_name=filename,
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True
+                )
 
-    except Exception as e:
-        return f"❌ Ошибка: {str(e)}", 500
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+        except ValueError as e:
+            st.error(f"❌ Ошибка в формате данных: {str(e)}")
+        except Exception as e:
+            st.error(f"❌ Ошибка: {str(e)}")

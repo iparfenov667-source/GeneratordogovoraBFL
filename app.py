@@ -2,12 +2,40 @@ import streamlit as st
 from docxtpl import DocxTemplate
 from datetime import datetime
 import io
+import time
 
 st.set_page_config(page_title="Генератор договора", layout="wide")
 
+# Синий королевский цвет
+ROYAL_BLUE = "#4169E1"
+
+# CSS для кастомизации
+custom_css = f"""
+<style>
+    .header-royal {{
+        color: {ROYAL_BLUE};
+        text-align: center;
+        font-weight: bold;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(65, 105, 225, 0.3);
+    }}
+    .blue-divider {{
+        height: 3px;
+        background: linear-gradient(90deg, {ROYAL_BLUE}, transparent);
+        margin: 20px 0;
+    }}
+</style>
+"""
+st.markdown(custom_css, unsafe_allow_html=True)
+
+# Заголовок РАПИД ПРАВО
+st.markdown('<div class="header-royal">🏛️ РАПИД ПРАВО 🏛️</div>', unsafe_allow_html=True)
+st.markdown('<div class="blue-divider"></div>', unsafe_allow_html=True)
+
 # Заголовок приложения
 st.title("📄 Генератор договора поручения")
-st.markdown("Генератор договоров для Рапид Право")
+st.markdown(f"<p style='color: {ROYAL_BLUE}; font-size: 1.1em; font-weight: 500;'>Генератор договоров для Рапид Право</p>", unsafe_allow_html=True)
 st.divider()
 
 # Два столбца для формы
@@ -51,7 +79,7 @@ with col2:
     summa = st.selectbox(
         "6️⃣ Стоимость (выберите тариф)",
         options=[
-                        (150000, "150 000 ₽ (единоразовый платеж)"),
+            (150000, "150 000 ₽ (единоразовый платеж)"),
             (180000, "180 000 ₽ (9 мес по 20 000 ₽)"),
             (210000, "210 000 ₽ (12 мес по 17 500 ₽)"),
             (240000, "240 000 ₽ (16 мес по 15 000 ₽)"),
@@ -76,21 +104,44 @@ with col2:
 st.divider()
 
 # Кнопка генерации
-if st.button("🚀 Сгенерировать договор", use_container_width=True):
+if st.button("🚀 Сгенерировать договор", use_container_width=True, key="generate_btn"):
     # Валидация
     if not all([contract_num, date_zakl, fio, data_rod, passport, summa_val, adres, phone]):
         st.error("❌ Заполните все поля")
     else:
         try:
+            # Эпичная анимация при генерации
+            with st.spinner('⚡ Вызываем магию договора...'):
+                time.sleep(0.5)
+            
+            progress_placeholder = st.empty()
+            status_placeholder = st.empty()
+            
+            # Анимационная полоса
+            progress_bar = st.progress(0)
+            
+            animation_steps = [
+                (0.2, "⚙️ Подготовка шаблона..."),
+                (0.4, "🔧 Заполнение данных..."),
+                (0.6, "✨ Применение магии..."),
+                (0.8, "🎯 Финальные штрихи..."),
+                (1.0, "🎉 Готово!")
+            ]
+            
+            for progress, status in animation_steps:
+                progress_bar.progress(progress)
+                status_placeholder.info(f"🔹 {status}")
+                time.sleep(0.3)
+            
             # Тарифы
             tariffs = {
-                                150000: {"payment": 150000, "months": 1},
+                150000: {"payment": 150000, "months": 1},
                 180000: {"payment": 20000, "months": 9},
                 210000: {"payment": 17500, "months": 12},
                 240000: {"payment": 15000, "months": 16},
                 260000: {"payment": 13000, "months": 20},
             }
-
+            
             if summa_val not in tariffs:
                 st.error("❌ Недопустимая стоимость")
             else:
@@ -101,6 +152,7 @@ if st.button("🚀 Сгенерировать договор", use_container_wid
                 # Генерация дат платежей
                 start_date = datetime.strptime(date_zakl, "%d.%m.%Y")
                 payment_dates = []
+                
                 for i in range(months):
                     if i == 0:
                         pay_date = date_zakl
@@ -121,6 +173,7 @@ if st.button("🚀 Сгенерировать договор", use_container_wid
                     "adres": adres,
                     "phone": phone,
                 }
+                
                 for i in range(1, 21):
                     context[f"payment_date_{i}"] = payment_dates[i - 1] if i <= months else ""
                     context[f"payment_summa_{i}"] = payment if i <= months else ""
@@ -131,10 +184,15 @@ if st.button("🚀 Сгенерировать договор", use_container_wid
                 output = io.BytesIO()
                 doc.save(output)
                 output.seek(0)
-
+                
                 filename = f"Договор_№{contract_num}.docx"
-
-                st.success("✅ Договор готов!")
+                
+                # Очищаем статус
+                progress_bar.empty()
+                status_placeholder.empty()
+                
+                # Успешное завершение
+                st.success("✅ Договор готов к скачиванию!")
                 st.download_button(
                     label="📥 Скачать договор",
                     data=output.getvalue(),
@@ -142,9 +200,8 @@ if st.button("🚀 Сгенерировать договор", use_container_wid
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     use_container_width=True
                 )
-
+                
         except ValueError as e:
             st.error(f"❌ Ошибка в формате данных: {str(e)}")
         except Exception as e:
             st.error(f"❌ Ошибка: {str(e)}")
-

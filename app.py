@@ -215,6 +215,3 @@ if st.button("🚀 Сгенерировать договор", use_container_wid
 
     except Exception as e:
         pass
-        except ValueError as e:
-            st.error(f"❌ Ошибка в формате данных: {str(e)}")
-        except Exception as e:

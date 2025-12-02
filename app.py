@@ -6,8 +6,27 @@ import time
 import random
 import os
 from dateutil.relativedelta import relativedelta
+import requests
+import threading
+
+# Keep alive function to prevent Render sleep
+def start_keep_alive():
+    def keep_alive():
+        import time
+        app_url = os.getenv("KEEP_ALIVE_URL", "https://generatordogovorabfl.onrender.com")
+        while True:
+            try:
+                requests.get(f"{app_url}/", timeout=10)
+            except:
+                pass
+            time.sleep(600)  # 10 minutes
+    thread = threading.Thread(target=keep_alive, daemon=True)
+    thread.start()
 
 st.set_page_config(page_title="Генератор договора", layout="wide")
+
+# Start keep alive thread
+start_keep_alive()
 
 # Синий королевский цвет
 ROYAL_BLUE = "#4169E1"
@@ -207,5 +226,6 @@ if st.button("🚀 Сгенерировать договор", use_container_wid
         except Exception as e:
             st.error(f"❌ Критическая ошибка: {str(e)}")
             st.stop()
+
 
 

@@ -212,9 +212,9 @@ if st.button("🚀 Сгенерировать договор", use_container_wid
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     use_container_width=True
                 )
-                
+
+    except Exception as e:
+        pass
         except ValueError as e:
             st.error(f"❌ Ошибка в формате данных: {str(e)}")
         except Exception as e:
-            st.error(f"❌ Ошибка: {str(e)}")
-

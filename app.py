@@ -101,7 +101,7 @@ with col1:
                             if i == 0:
                                 paydate = datezakl
                             else:
-                                year =( startdate.year * 12 + startdate.month + i - 1) // 12
+                                year = ( startdate.year * 12 + startdate.month + i - 1) // 12
                                         
                                 month = (startdate.month + i - 1) % 12 + 1
                                 paydate = f'10.{month:02d}.{year}'
@@ -147,6 +147,7 @@ with col1:
                 st.error(f"Ошибка формата даты: используйте формат ДД.МММ.ГГГГ")
             except Exception as e:
                 st.error(f"Ошибка: {str(e)}")
+
 
 
 

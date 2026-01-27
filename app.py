@@ -125,7 +125,7 @@ with col1:
                         context[f'payment_summa_{i}'] = payment if i <= months else ''
                     
                     # Загрузка и заполнение шаблона
-    i                   doc = DocxTemplate(template_path)
+                       doc = DocxTemplate(template_path)
                         doc.render(context)
                         
                         # Возврат файла
@@ -145,6 +145,7 @@ with col1:
                 st.error(f"Ошибка формата даты: используйте формат ДД.МММ.ГГГГ")
             except Exception as e:
                 st.error(f"Ошибка: {str(e)}")
+
 
 
 

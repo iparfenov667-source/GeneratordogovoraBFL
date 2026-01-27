@@ -10,8 +10,7 @@ st.set_page_config(page_title="Генератор договора", layout="wid
 st.title("Генератор договора")
 
 # Создание формы
-col1, col2 = st.columns(1)
-
+col1 = st.columns(1)[0]
 with col1:
     contractnum = st.text_input(
         "1) Номер договора (1765):",
@@ -150,4 +149,5 @@ with col1:
                 st.error(f"Ошибка формата даты: используйте формат ДД.МММ.ГГГГ")
             except Exception as e:
                 st.error(f"Ошибка: {str(e)}")
+
 

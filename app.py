@@ -101,8 +101,8 @@ with col1:
                             if i == 0:
                                 paydate = datezakl
                             else:
-                                year = (st
-                                        artdate.year * 12 + startdate.month + i - 1) // 12
+                                year =( startdate.year * 12 + startdate.month + i - 1) // 12
+                                        
                                 month = (startdate.month + i - 1) % 12 + 1
                                 paydate = f'10.{month:02d}.{year}'
                             payment_dates.append(paydate)

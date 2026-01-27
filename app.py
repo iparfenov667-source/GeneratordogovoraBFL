@@ -4,9 +4,7 @@ from docxtpl import DocxTemplate
 from datetime import datetime
 import io
 import os
-import glob
-
-st.set_page_config(page_title="Генератор договора", layout="wide")
+sst.set_page_config(page_title="Генератор договора", layout="wide")
 
 st.title("Генератор договора")
 
@@ -126,10 +124,8 @@ with col1:
                         context[f'payment_summa_{i}'] = payment if i <= months else ''
                     
                     # Загрузка и заполнение шаблона
-    template_files = glob.glob('Dogovor_BFL*.docx')            template_files = glob.glob('Dogovor_BFL*.docx')
-        template_path = template_files[0] if template_files else None
     if not template_path:
-        st.error(f"Файл шаблона не найден")                        st.error(f"Файл шаблона {template_path} не найден")
+        st.error(f"Файл шаблона {template_path} не найден")
                     else:
                         doc = DocxTemplate(template_path)
                         doc.render(context)
@@ -151,6 +147,7 @@ with col1:
                 st.error(f"Ошибка формата даты: используйте формат ДД.МММ.ГГГГ")
             except Exception as e:
                 st.error(f"Ошибка: {str(e)}")
+
 
 
 

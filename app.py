@@ -1,3 +1,4 @@
+# Streamlit app for contract generation - Fixed
 import streamlit as st
 from docxtpl import DocxTemplate
 from datetime import datetime
@@ -149,3 +150,4 @@ with col1:
                 st.error(f"Ошибка формата даты: используйте формат ДД.МММ.ГГГГ")
             except Exception as e:
                 st.error(f"Ошибка: {str(e)}")
+

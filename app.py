@@ -93,11 +93,10 @@ with col1:
                     
                     # Парсинг даты договора
                     startdate = datetime.strptime(datezakl, '%d.%m.%Y')
-                    127
+                
                     
                     # Генерация дат платежей
                     payment_dates = []
-                    for i in range(months):
                         if i == 0:
                             paydate = datezakl
                         else:
@@ -146,6 +145,7 @@ with col1:
                 st.error(f"Ошибка формата даты: используйте формат ДД.МММ.ГГГГ")
             except Exception as e:
                 st.error(f"Ошибка: {str(e)}")
+
 
 
 
